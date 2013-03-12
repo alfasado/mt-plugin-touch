@@ -1,0 +1,43 @@
+name: Touch
+id  : Touch
+key:  touch
+version: 0.1
+author_link: http://alfasado.net/
+author_name: Alfasado Inc.
+l10n_class: Touch::L10N
+description: <__trans phrase="Touch file at rebuild.">
+tags:
+    function:
+        touch: >
+                sub {
+                    my ( $ctx, $args, $cond ) = @_;
+                    my $app = MT->instance;
+                    if ( ( ref $app ) =~ /^MT::App::/ ) {
+                        if ( $app->param( '__mode' ) =~ /preview/ ) {
+                            return '';
+                        }
+                    }
+                    my $blog = $ctx->stash( 'blog' );
+                    if ( $blog->is_blog ) {
+                        $blog = $blog->website;
+                    }
+                    my $path = quotemeta( $blog->site_path );
+                    my $file = $args->{ file };
+                    if ( $file !~ /^$path/ ) {
+                        return '';
+                    }
+                    eval { require File::Touch };
+                    if ( $@ ) {
+                        my $data = '';
+                        my $fmgr = $blog->file_mgr;
+                        if ( $fmgr->exists( $file ) ) {
+                            $data = $fmgr->get_data( $file );
+                        }
+                        $data = $fmgr->put_data( $data, $file );
+                    } else {
+                        my @touch;
+                        push( @touch, $file );
+                        File::Touch::touch( @touch );
+                    }
+                    return '';
+                }
